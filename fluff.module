@@ -6,6 +6,32 @@
  */
 
 /**
+ * Add a Puff given a Git URL.
+ *
+ * @param $uri
+ *   The URI to clone from.
+ * @param $site_specific
+ *   Whether use the site specific path.
+ *
+ * @return
+ *   The path to the specified Puff.
+ */
+function fluff_add_puff($uri, $site_specific = FALSE) {
+  $root = fluff_document_root();
+  $path = ($site_specific) ? conf_path() . '/puffs' : 'sites/all/puffs';
+  $path = $root . '/' . $path;
+  
+  // Check if path exists.
+  if (!file_exists($path)) {
+    $dir_made = mkdir($path);
+  }
+  
+  $uri = escapeshellarg($uri);
+  $cmd = 'cd ' . $path . '; git clone ' . $uri;
+  $last_line = exec($cmd, $output, $returned);
+}
+
+/**
  * Gets the path of a Puff (project).
  *
  * @param $name
@@ -14,9 +40,9 @@
  *   Whether to prefix the resulting path with base_path().
  *
  * @return
- *   The path to the specified library.
+ *   The path to the specified Puff.
  */
-function fluff_get_path($name, $base_path = FALSE) {
+function fluff_get_puff_path($name, $base_path = FALSE) {
   static $puffs;
 
   if (!isset($puffs)) {
@@ -98,3 +124,22 @@ function fluff_get_puffs() {
   return $directories;
 }
 
+/**
+ * Get the document root for the current Drupal installation.
+ * $_SERVER['DOCUMENT_ROOT'] is not reliable across all
+ * systems, so we need a way to get the correct value.
+ *
+ * @return (string)
+ */
+function fluff_document_root() {
+  static $path;
+
+  if (empty($path)) {
+    $absolute_dir = dirname(__FILE__);
+    $relative_dir = drupal_get_path('module', 'fluff');
+    return substr($absolute_dir, 0, -1 * (1 + strlen($relative_dir)));
+  }
+  else {
+    return $path;
+  }
+}
