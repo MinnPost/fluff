@@ -1,0 +1,5 @@
+name = Fluff
+description = A way of managing embeddable code-based content.
+core = 6.x
+
+
