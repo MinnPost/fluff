@@ -1,0 +1,81 @@
+<?php
+/**
+ * @file
+ * Install file for the Fluff module.  Projects are referred
+ * to as puffs.
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function fluff_install() {
+  // Create tables
+  drupal_install_schema('fluff');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function fluff_uninstall() {
+  // Remove tables
+  drupal_uninstall_schema('fluff');
+
+  // Get module variables
+  $results = db_query("SELECT v.name FROM {variable} AS v WHERE v.name LIKE '%s%%'", 'fluff_');
+  // Remove variables
+  while ($row = db_fetch_array($results)) {
+    variable_del($row['name']);
+  }
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function fluff_schema() {
+  $schema = array();
+
+  // Puff table (ctools extras)
+  $schema['fluff_puffs'] = array(
+    'description' => 'Storage for user defined Puffs (projects).',
+    'export' => array(
+      'key' => 'name',
+      'identifier' => 'fluff_puffs',
+      'default hook' => 'fluff_puffs',
+      'api' => array(
+        'owner' => 'fluff',
+        'api' => 'fluff_puffs',
+        'minimum_version' => 1,
+        'current_version' => 1,
+      ),
+    ),
+    'fields' => array(
+      'machine_name' => array(
+        'description' => t('The primary identifier for the preset.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'title' => array(
+        'description' => t('The title of the Puff.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'uri' => array(
+        'description' => t('The uri for the code.'),
+        'type' => 'varchar',
+        'length' => 512,
+        'not null' => TRUE,
+      ),
+      'config' => array(
+        'description' => t('The serialized configuration data.'),
+        'type' => 'text',
+        'not null' => TRUE,
+        'serialize' => TRUE,
+      ),
+    ),
+    'primary key' => array('machine_name'),
+  );
+
+  return $schema;
+}

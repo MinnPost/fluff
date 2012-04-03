@@ -35,7 +35,8 @@ function fluff_add_puff($uri, $options = array(), $site_specific = FALSE) {
   
   if ($valid && $uri) {
     // Attemmpt to clone
-    $cmd = 'cd ' . $path . '; git clone ' . escapeshellarg($uri) . ' 2>&1';
+    $dir = isset($options['machine_name']) ? ' ' . $options['machine_name'] : '';
+    $cmd = 'cd ' . $path . '; git clone ' . escapeshellarg($uri) . $dir . ' 2>&1';
     $last_line = exec($cmd, $output, $returned);
     
     // Check for errors
