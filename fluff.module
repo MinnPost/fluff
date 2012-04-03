@@ -14,9 +14,9 @@
  *   Whether use the site specific path.
  *
  * @return
- *   The path to the specified Puff.
+ *   TRUE if success, FALSE for general error, and string for specific message;
  */
-function fluff_add_puff($uri, $site_specific = FALSE) {
+function fluff_add_puff($uri, $options = array(), $site_specific = FALSE) {
   $root = fluff_document_root();
   $path = ($site_specific) ? conf_path() . '/puffs' : 'sites/all/puffs';
   $path = $root . '/' . $path;
@@ -26,9 +26,31 @@ function fluff_add_puff($uri, $site_specific = FALSE) {
     $dir_made = mkdir($path);
   }
   
-  $uri = escapeshellarg($uri);
-  $cmd = 'cd ' . $path . '; git clone ' . $uri;
-  $last_line = exec($cmd, $output, $returned);
+  // Check URL
+  $valid = fluff_valid_url($uri, TRUE);
+  
+  // Add any options, like pass to the URL
+  $parts = fluff_parse_uri($uri);
+  $uri = fluff_http_build_url(array_merge($parts, $options));
+  
+  if ($valid && $uri) {
+    // Attemmpt to clone
+    $cmd = 'cd ' . $path . '; git clone ' . escapeshellarg($uri) . ' 2>&1';
+    $last_line = exec($cmd, $output, $returned);
+    
+    // Check for errors
+    $success = TRUE;
+    foreach ($output as $out) {
+      if (stripos($out, 'fatal') !== FALSE) {
+        $success = $out;
+      }
+    }
+    
+    dpm($success);
+    return $success;
+  }
+  
+  return FALSE;
 }
 
 /**
@@ -141,5 +163,79 @@ function fluff_document_root() {
   }
   else {
     return $path;
+  }
+}
+
+/**
+ * Valid URL
+ *
+ * Taken from Drupal API, but added git scheme.
+ * @see http://api.drupal.org/api/drupal/core%21includes%21common.inc/function/valid_url
+ */
+function fluff_valid_url($url, $absolute = FALSE) {
+  if ($absolute) {
+    return (bool) preg_match("
+      /^                                                      # Start at the beginning of the text
+      (?:ftp|https?|feed|git):\/\/                            # Look for ftp, http, https or feed schemes
+      (?:                                                     # Userinfo (optional) which is typically
+        (?:(?:[\w\.\-\+!$&'\(\)*\+,;=]|%[0-9a-f]{2})+:)*      # a username or a username and password
+        (?:[\w\.\-\+%!$&'\(\)*\+,;=]|%[0-9a-f]{2})+@          # combination
+      )?
+      (?:
+        (?:[a-z0-9\-\.]|%[0-9a-f]{2})+                        # A domain name or a IPv4 address
+        |(?:\[(?:[0-9a-f]{0,4}:)*(?:[0-9a-f]{0,4})\])         # or a well formed IPv6 address
+      )
+      (?::[0-9]+)?                                            # Server port number (optional)
+      (?:[\/|\?]
+        (?:[\w#!:\.\?\+=&@$'~*,;\/\(\)\[\]\-]|%[0-9a-f]{2})   # The path and query (optional)
+      *)?
+    $/xi", $url);
+  }
+  else {
+    return (bool) preg_match("/^(?:[\w#!:\.\?\+=&@$'~*,;\/\(\)\[\]\-]|%[0-9a-f]{2})+$/i", $url);
+  }
+}
+
+/**
+ * Parse URL
+ *
+ * Utilizes PHP's parse_url but adds a workaround for
+ * git based scheme.
+ */
+function fluff_parse_uri($uri = '') {
+  $pos = strpos($uri, 'git');
+  if ($pos === 0) {
+    $uri = substr_replace($uri, 'http', $pos, 3);
+    $parts = parse_url($uri);
+    $parts['scheme'] = 'git';
+    return $parts;
+  }
+  else {
+    return parse_url($uri);
+  }
+}
+
+/**
+ * Build URL
+ *
+ * http_build_url is a PECL function so we wrap it with
+ * a very basic funvtion.
+ */
+function fluff_http_build_url($parts = array()) {
+  if (function_exists('http_build_url')) {
+    return http_build_url($parts);
+  }
+  else {
+    $keys = array('user','pass','port','path','query','fragment');
+    $url = '';
+    $url .= ((isset($parts['scheme'])) ? $parts['scheme'] . '://' : '')
+			.((isset($parts['user'])) ? $parts['user'] . ((isset($parts['pass'])) ? ':' . $parts['pass'] : '') .'@' : '')
+			.((isset($parts['host'])) ? $parts['host'] : '')
+			.((isset($parts['port'])) ? ':' . $parts['port'] : '')
+			.((isset($parts['path'])) ? $parts['path'] : '')
+			.((isset($parts['query'])) ? '?' . $parts['query'] : '')
+			.((isset($parts['fragment'])) ? '#' . $parts['fragment'] : '');
+			
+		return $url;
   }
 }
