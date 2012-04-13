@@ -56,18 +56,14 @@ function fluff_add_puff($uri, $options = array(), $site_specific = FALSE) {
   if ($valid && $uri) {
     // Attemmpt to clone
     $cmd = 'cd ' . $path . '; git clone ' . escapeshellarg($uri) . ' ' . $machine_name . ' 2>&1';
-    $last_line = exec($cmd, $output, $returned);
+    $success = fluff_exec($cmd, 'git', $output, $returned);
     
-    // Check for errors
-    $success = TRUE;
-    foreach ($output as $out) {
-      if (stripos($out, 'fatal') !== FALSE) {
-        $success = t('Fatal error on command, %command.  Error: %error.', array(
-          '%command' => $cmd,
-          '%error' => $out,
-        ));
-      }
+    // Handle any submodules
+    if ($success === TRUE) {
+      $cmd = 'cd ' . $path . '/' . $machine_name . '; git submodule init; git submodule update;';
+      return fluff_exec($cmd, 'git', $output, $returned);
     }
+    
     return $success;
   }
   else {
@@ -166,6 +162,39 @@ function fluff_get_puffs() {
   }
 
   return $directories;
+}
+
+/**
+ * A wrapper around the exec() command.
+ *
+ * @param $cmd
+ *   String.  Actual command.
+ * @param $type
+ *   A string of a type of command.  Will be used for specific error
+ *   handling.
+ * @param $output
+ *   Reference to all output.
+ * @param $returned
+ *    Reference to returned output.
+ *
+ * @return
+ *   TRUE if success, FALSE for general error, and string for specific message;
+ */
+function fluff_exec($cmd = '', $type = '', &$output, &$returned) {
+  $last_line = exec($cmd, $output, $returned);
+  
+  // Check for fatal errors
+  $success = TRUE;
+  foreach ($output as $out) {
+    if (stripos($out, 'fatal') !== FALSE) {
+      $success = t('Fatal error on command, %command.  Error: %error.', array(
+        '%command' => $cmd,
+        '%error' => $out,
+      ));
+    }
+  }
+  
+  return $success;
 }
 
 /**
