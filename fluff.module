@@ -6,6 +6,59 @@
  */
 
 /**
+ * Implements hook_help
+ */
+function fluff_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#fluff':
+      return '<p>'. t('Fluff is a way of managing embeddable code-based content.') .'</p>';
+
+  }
+}
+
+/**
+ * Implements hook_menu
+ */
+function fluff_menu() {
+  $items = array();
+
+  $items['admin/build/fluff'] = array(
+    'title' => 'Fluff',
+    'description' => 'Manage puff projects.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fluff_admin_settings'),
+    'access arguments' => array('administer fluff'),
+    'file' => 'includes/fluff.admin.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/build/fluff/settings'] = array(
+    'title' => 'Settings',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -20,
+  );
+  $items['admin/build/fluff/puffs'] = array(
+    'title' => 'Puffs',
+    'description' => 'Manage puff projects.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fluff_admin_puffs'),
+    'access arguments' => array('administer fluff'),
+    'file' => 'includes/fluff.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/build/fluff/add'] = array(
+    'title' => 'Add',
+    'description' => 'Add a puff project.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fluff_admin_add_puff'),
+    'access arguments' => array('administer fluff'),
+    'file' => 'includes/fluff.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  
+  return $items;
+}
+
+/**
  * Add a Puff given a Git URL.
  *
  * @param $uri
@@ -72,96 +125,20 @@ function fluff_add_puff($uri, $options = array(), $site_specific = FALSE) {
 }
 
 /**
- * Gets the path of a Puff (project).
+ * Rebuild fluff indes.
  *
- * @param $name
- *   The machine name of the Puff to return the path for.
- * @param $base_path
- *   Whether to prefix the resulting path with base_path().
- *
- * @return
- *   The path to the specified Puff.
+ * Goes through code in puffs and stores data as needed.
  */
-function fluff_get_puff_path($name, $base_path = FALSE) {
-  static $puffs;
-
-  if (!isset($puffs)) {
-    $puffs = fluff_get_puffs();
-  }
-
-  $path = ($base_path ? base_path() : '');
-  if (!isset($puffs[$name])) {
-    // Most often, external libraries can be shared across multiple sites, so
-    // we return sites/all/libraries as the default path.
-    $path .= 'sites/all/libraries/' . $name;
-  }
-  else {
-    $path .= $puffs[$name];
-  }
-
-  return $path;
-}
-
-/**
- * Returns an array of Puff directories.
- *
- * Returns an array of directories from the all-sites directory
- * (i.e. sites/all/puffs/), the profiles directory, and site-specific
- * directory (i.e. sites/somesite/puffs/).
- *
- * @return
- *   A list of directories.
- */
-function fluff_get_puffs() {
-  global $profile;
-
-  // When this function is called during Drupal's initial installation process,
-  // the name of the profile that is about to be installed is stored in the
-  // global $profile variable. At all other times, the regular system variable
-  // contains the name of the current profile, and we can call variable_get()
-  // to determine the profile.
-  if (!isset($profile)) {
-    $profile = variable_get('install_profile', 'default');
-  }
-
-  $directory = 'puffs';
-  $searchdir = array();
-  $config = conf_path();
-
-  // The 'profiles' directory contains pristine collections of modules and
-  // themes as organized by a distribution.  It is pristine in the same way
-  // that /modules is pristine for core; users should avoid changing anything
-  // there in favor of sites/all or sites/<domain> directories.
-  if (file_exists("profiles/$profile/$directory")) {
-    $searchdir[] = "profiles/$profile/$directory";
-  }
-
-  // Always search sites/all/*.
-  $searchdir[] = 'sites/all/' . $directory;
-
-  // Also search sites/<domain>/*.
-  if (file_exists("$config/$directory")) {
-    $searchdir[] = "$config/$directory";
-  }
-
-  // Retrieve list of directories.
-  // @todo Core: Allow to scan for directories.
-  $directories = array();
-  $nomask = array('CVS');
-  foreach ($searchdir as $dir) {
-    if (is_dir($dir) && $handle = opendir($dir)) {
-      while (FALSE !== ($file = readdir($handle))) {
-        if (!in_array($file, $nomask) && $file[0] != '.') {
-          if (is_dir("$dir/$file")) {
-            $directories[$file] = "$dir/$file";
-          }
-        }
-      }
-      closedir($handle);
-    }
-  }
-
-  return $directories;
+function fluff_build_puff_index() {
+  // Go through directories
+  $files = drupal_system_listing('\.puff$', 'puffs', 'name', 0);
+  
+  //dpm($files);
+  
+  // Determine machine name
+  
+  // Save info and other data
+  
 }
 
 /**
