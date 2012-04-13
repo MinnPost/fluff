@@ -33,25 +33,46 @@ function fluff_add_puff($uri, $options = array(), $site_specific = FALSE) {
   $parts = fluff_parse_uri($uri);
   $uri = fluff_http_build_url(array_merge($parts, $options));
   
+  // Figure out directory name
+  $machine_name = isset($options['machine_name']) ? $options['machine_name'] : '';
+  if (empty($machine_name)) {
+    $path_parts = explode('/', $parts['path']);
+    $machine_name = array_pop($path_parts);
+    // Maybe a little presumptious
+    $machine_name = str_replace('.git', '', $machine_name);
+  }
+  
+  // Some sanity checks
+  if (empty($machine_name)) {
+    return t('Machine name was not found.');
+  }
+  
+  // Check if already there
+  if (file_exists($path . '/' . $machine_name)) {
+    return t('Puff path already exists with the machine name: %name', array('%name' => $machine_name));
+  }
+  
+  // Let's get the project
   if ($valid && $uri) {
     // Attemmpt to clone
-    $dir = isset($options['machine_name']) ? ' ' . $options['machine_name'] : '';
-    $cmd = 'cd ' . $path . '; git clone ' . escapeshellarg($uri) . $dir . ' 2>&1';
+    $cmd = 'cd ' . $path . '; git clone ' . escapeshellarg($uri) . ' ' . $machine_name . ' 2>&1';
     $last_line = exec($cmd, $output, $returned);
     
     // Check for errors
     $success = TRUE;
     foreach ($output as $out) {
       if (stripos($out, 'fatal') !== FALSE) {
-        $success = $out;
+        $success = t('Fatal error on command, %command.  Error: %error.', array(
+          '%command' => $cmd,
+          '%error' => $out,
+        ));
       }
     }
-    
-    dpm($success);
     return $success;
   }
-  
-  return FALSE;
+  else {
+    return t('Not a valid URI.');
+  }
 }
 
 /**
