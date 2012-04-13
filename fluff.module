@@ -131,14 +131,30 @@ function fluff_add_puff($uri, $options = array(), $site_specific = FALSE) {
  */
 function fluff_build_puff_index() {
   // Go through directories
-  $files = drupal_system_listing('\.puff$', 'puffs', 'name', 0);
+  $puffs = drupal_system_listing('\.puff$', 'puffs', 'name', 0);
   
-  //dpm($files);
   
   // Determine machine name
   
   // Save info and other data
-  
+  foreach ($puffs as $name => $file_info) {
+    $puffs[$name]->info = drupal_parse_info_file($file_info->filename);
+    
+    // Create puff object
+    $puff = new stdClass();
+    $puff->machine_name = $name;
+    $puff->title = $puffs[$name]->info['title'];
+    $puff->config = $puffs[$name];
+    
+    // Save to DB
+    $exists = db_result(db_query("SELECT machine_name FROM {fluff_puffs} WHERE machine_name = '%s'", $name));
+    if ($exists) {
+      drupal_write_record('fluff_puffs', $puff, 'machine_name');
+    }
+    else {
+      drupal_write_record('fluff_puffs', $puff);
+    }
+  }
 }
 
 /**
