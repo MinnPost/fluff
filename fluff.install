@@ -38,7 +38,7 @@ function fluff_schema() {
   $schema['fluff_puffs'] = array(
     'description' => 'Storage for user defined Puffs (projects).',
     'export' => array(
-      'key' => 'name',
+      'key' => 'machine_name',
       'identifier' => 'fluff_puffs',
       'default hook' => 'fluff_puffs',
       'api' => array(

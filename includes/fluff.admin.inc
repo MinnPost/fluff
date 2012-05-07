@@ -50,6 +50,14 @@ function fluff_admin_puffs(&$form_state) {
 }
 
 /**
+ * View puff.
+ */
+function fluff_admin_view_puff(&$form_state, $puff = array()) {
+  
+  return '';
+}
+
+/**
  * Add puffs interface.
  */
 function fluff_admin_add_puff(&$form_state) {

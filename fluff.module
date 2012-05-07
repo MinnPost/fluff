@@ -54,6 +54,15 @@ function fluff_menu() {
     'file' => 'includes/fluff.admin.inc',
     'type' => MENU_LOCAL_TASK,
   );
+  $items['admin/build/fluff/puffs/%fluff_puff/view'] = array(
+    'title' => 'View',
+    'description' => 'View puff.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fluff_admin_view_puff'),
+    'access arguments' => array('administer fluff'),
+    'file' => 'includes/fluff.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
   
   return $items;
 }
@@ -200,6 +209,14 @@ function fluff_get_puff($name, $reset = TRUE) {
   }
   $puffs = ctools_export_load_object('fluff_puffs', 'all', array($name));
   return !empty($puffs[$name]) ? $puffs[$name] : FALSE;
+}
+
+/**
+ * Menu loader for puff.
+ *
+ */
+function fluff_puff_load($name, $reset = TRUE) {
+  return fluff_get_puff($name, $reset);
 }
 
 /**
