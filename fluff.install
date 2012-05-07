@@ -67,6 +67,12 @@ function fluff_schema() {
         'length' => 512,
         'not null' => TRUE,
       ),
+      'branch' => array(
+        'description' => 'The current branch of the code.',
+        'type' => 'varchar',
+        'length' => 512,
+        'not null' => TRUE,
+      ),
       'local_repo' => array(
         'description' => 'The path to the local repository',
         'type' => 'varchar',

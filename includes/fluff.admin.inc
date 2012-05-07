@@ -35,13 +35,16 @@ function fluff_admin_puffs(&$form_state) {
   foreach ($puffs as $p) {
     $puffs_options[$p->machine_name] = $p->title;
   }
-  dpm($puffs);
   
-  $form['puffs_update'] = array(
-    '#title' => t('Update'),
+  $form['puffs_select'] = array(
+    '#title' => t('Select'),
     '#type' => 'checkboxes',
     '#options' => $puffs_options,
   );
+  
+  // Theme
+  $form['#puffs'] = $puffs;
+  $form['#theme'] = 'fluff_puffs_table_form';
 
   return $form;
 }

@@ -59,6 +59,21 @@ function fluff_menu() {
 }
 
 /**
+ * Implements hook_theme().
+ */
+function fluff_theme() {
+  $base = array(
+    'path' => drupal_get_path('module', 'fluff') .'/theme',
+    'file' => 'fluff.theme.inc',
+  );
+
+  $items = array();
+  $items['fluff_puffs_table_form'] = $base;
+
+  return $items;
+}
+
+/**
  * Add a Puff given a Git URL.
  *
  * @param $uri
@@ -139,9 +154,10 @@ function fluff_add_puff($uri, $options = array(), $site_specific = FALSE) {
           $puff = new stdClass();
           $puff->machine_name = $machine_name;
           $puff->uri = $uri;
+          $puff->branch = $options['branch'];
           $puff->local_repo = $local_puff_path . '/' . $machine_name;
           $puff->info_location = $info->filename;
-          $puff->title = (isset($info->puff['title'])) ? $info->puff['title'] : '';
+          $puff->title = (isset($puff_info['title'])) ? $puff_info['title'] : '';
           $puff->config = $puff_info;
           
           // Save to DB
