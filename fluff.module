@@ -73,8 +73,9 @@ function fluff_menu() {
  */
 function fluff_add_puff($uri, $options = array(), $site_specific = FALSE) {
   $root = fluff_document_root();
-  $path = ($site_specific) ? conf_path() . '/puffs' : 'sites/all/puffs';
-  $path = $root . '/' . $path;
+  $local_puff_path = ($site_specific) ? conf_path() . '/puffs' : 'sites/all/puffs';
+  $path = $root . '/' . $local_puff_path;
+  $options['branch'] = (isset($options['branch'])) ? $options['branch'] : 'master';
   
   // Check if path exists.
   if (!file_exists($path)) {
@@ -102,6 +103,12 @@ function fluff_add_puff($uri, $options = array(), $site_specific = FALSE) {
     return t('Machine name was not found.');
   }
   
+  // Check DB
+  $db_exists = db_result(db_query("SELECT machine_name FROM {fluff_puffs} WHERE machine_name = '%s'", $machine_name));
+  if ($db_exists) {
+    return t('There is a database entry for this machine name already.');
+  }
+  
   // Check if already there
   if (file_exists($path . '/' . $machine_name)) {
     return t('Puff path already exists with the machine name: %name', array('%name' => $machine_name));
@@ -110,51 +117,55 @@ function fluff_add_puff($uri, $options = array(), $site_specific = FALSE) {
   // Let's get the project
   if ($valid && $uri) {
     // Attemmpt to clone
-    $cmd = 'cd ' . $path . '; git clone ' . escapeshellarg($uri) . ' ' . $machine_name . ' 2>&1';
+    $cmd = 'cd ' . $path . '; git clone -b ' . escapeshellarg($options['branch']) . ' ' . escapeshellarg($uri) . ' ' . $machine_name . ' 2>&1';
     $success = fluff_exec($cmd, 'git', $output, $returned);
     
     // Handle any submodules
     if ($success === TRUE) {
       $cmd = 'cd ' . $path . '/' . $machine_name . '; git submodule init; git submodule update;';
-      return fluff_exec($cmd, 'git', $output, $returned);
+      $clone_success = fluff_exec($cmd, 'git', $output, $returned);
       
-      // Look for 
+      if ($clone_success === TRUE) {
+        // Look for .info file
+        $infos = file_scan_directory($local_puff_path . '/' . $machine_name, '\.puff$', array('.', '..', 'CVS', '.git'));
+        if (is_array($infos) && count($infos) > 0) {
+          // We really only want the first info file we find.
+          $info = array_shift($infos);
+          
+          // Git puff info
+          $puff_info = drupal_parse_info_file($info->filename);
+          
+          // Build object.  
+          $puff = new stdClass();
+          $puff->machine_name = $machine_name;
+          $puff->uri = $uri;
+          $puff->local_repo = $local_puff_path . '/' . $machine_name;
+          $puff->info_location = $info->filename;
+          $puff->title = (isset($info->puff['title'])) ? $info->puff['title'] : '';
+          $puff->config = $puff_info;
+          
+          // Save to DB
+          $exists = db_result(db_query("SELECT machine_name FROM {fluff_puffs} WHERE machine_name = '%s'", $machine_name));
+          if ($exists) {
+            return t('There is a database entry for this machine name already.');
+          }
+          else {
+            drupal_write_record('fluff_puffs', $puff);
+          }
+        }
+        else {
+          return t('Could not find a valid .puff file');
+        }
+      }
+      else {
+        return $clone_success;
+      }
     }
     
     return $success;
   }
   else {
     return t('Not a valid URI.');
-  }
-}
-
-/**
- * Rebuild fluff indes.
- *
- * Goes through code in puffs and stores data as needed.
- */
-function fluff_build_puff_index() {
-  // Go through directories
-  $puffs = drupal_system_listing('\.puff$', 'puffs', 'name', 0);
-  
-  // Save info and other data
-  foreach ($puffs as $name => $file_info) {
-    $puffs[$name]->info = drupal_parse_info_file($file_info->filename);
-    
-    // Create puff object
-    $puff = new stdClass();
-    $puff->machine_name = $name;
-    $puff->title = $puffs[$name]->info['title'];
-    $puff->config = $puffs[$name];
-    
-    // Save to DB
-    $exists = db_result(db_query("SELECT machine_name FROM {fluff_puffs} WHERE machine_name = '%s'", $name));
-    if ($exists) {
-      drupal_write_record('fluff_puffs', $puff, 'machine_name');
-    }
-    else {
-      drupal_write_record('fluff_puffs', $puff);
-    }
   }
 }
 

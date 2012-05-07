@@ -74,7 +74,7 @@ function fluff_schema() {
         'not null' => TRUE,
       ),
       'info_location' => array(
-        'description' => 'The path to the .info file',
+        'description' => 'The path to the .puff info file',
         'type' => 'varchar',
         'length' => 512,
         'not null' => TRUE,

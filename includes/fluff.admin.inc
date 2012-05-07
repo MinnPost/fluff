@@ -27,7 +27,6 @@ function fluff_admin_settings(&$form_state) {
  * Manage puffs interface.
  */
 function fluff_admin_puffs(&$form_state) {
-  fluff_build_puff_index();
   $form = array();
   $puffs = fluff_get_puffs(TRUE);
   
