@@ -50,25 +50,37 @@ function fluff_schema() {
     ),
     'fields' => array(
       'machine_name' => array(
-        'description' => t('The primary identifier for the preset.'),
+        'description' => 'The primary identifier for the puff.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
       ),
       'title' => array(
-        'description' => t('The title of the Puff.'),
+        'description' => 'The title of the Puff.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
       ),
       'uri' => array(
-        'description' => t('The uri for the code.'),
+        'description' => 'The uri for the code.',
+        'type' => 'varchar',
+        'length' => 512,
+        'not null' => TRUE,
+      ),
+      'local_repo' => array(
+        'description' => 'The path to the local repository',
+        'type' => 'varchar',
+        'length' => 512,
+        'not null' => TRUE,
+      ),
+      'info_location' => array(
+        'description' => 'The path to the .info file',
         'type' => 'varchar',
         'length' => 512,
         'not null' => TRUE,
       ),
       'config' => array(
-        'description' => t('The serialized configuration data.'),
+        'description' => 'The serialized configuration data.',
         'type' => 'text',
         'not null' => TRUE,
         'serialize' => TRUE,

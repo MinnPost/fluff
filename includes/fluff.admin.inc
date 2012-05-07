@@ -27,9 +27,22 @@ function fluff_admin_settings(&$form_state) {
  * Manage puffs interface.
  */
 function fluff_admin_puffs(&$form_state) {
-  $form = array();
-  
   fluff_build_puff_index();
+  $form = array();
+  $puffs = fluff_get_puffs(TRUE);
+  
+  // Build options list
+  $puffs_options = array();
+  foreach ($puffs as $p) {
+    $puffs_options[$p->machine_name] = $p->title;
+  }
+  dpm($puffs);
+  
+  $form['puffs_update'] = array(
+    '#title' => t('Update'),
+    '#type' => 'checkboxes',
+    '#options' => $puffs_options,
+  );
 
   return $form;
 }

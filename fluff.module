@@ -63,6 +63,8 @@ function fluff_menu() {
  *
  * @param $uri
  *   The URI to clone from.
+ * @param $options
+ *   Array of options for build URL.
  * @param $site_specific
  *   Whether use the site specific path.
  *
@@ -115,6 +117,8 @@ function fluff_add_puff($uri, $options = array(), $site_specific = FALSE) {
     if ($success === TRUE) {
       $cmd = 'cd ' . $path . '/' . $machine_name . '; git submodule init; git submodule update;';
       return fluff_exec($cmd, 'git', $output, $returned);
+      
+      // Look for 
     }
     
     return $success;
@@ -132,9 +136,6 @@ function fluff_add_puff($uri, $options = array(), $site_specific = FALSE) {
 function fluff_build_puff_index() {
   // Go through directories
   $puffs = drupal_system_listing('\.puff$', 'puffs', 'name', 0);
-  
-  
-  // Determine machine name
   
   // Save info and other data
   foreach ($puffs as $name => $file_info) {
@@ -155,6 +156,40 @@ function fluff_build_puff_index() {
       drupal_write_record('fluff_puffs', $puff);
     }
   }
+}
+
+/**
+ * Object loader for puffs.
+ *
+ * @param $name
+ *   Puff name
+ * @return object
+ *   puff export
+ */
+function fluff_get_puff($name, $reset = TRUE) {
+  ctools_include('export');
+  if ($reset) {
+    ctools_export_load_object_reset('fluff_puffs');
+  }
+  $puffs = ctools_export_load_object('fluff_puffs', 'all', array($name));
+  return !empty($puffs[$name]) ? $puffs[$name] : FALSE;
+}
+
+/**
+ * Get all puffs.
+ *
+ * @param $reset
+ *   Boolean whether to reset cache or not
+ * @return array
+ *   layer exports
+ */
+function fluff_get_puffs($reset = TRUE) {
+  ctools_include('export');
+  if ($reset) {
+    ctools_export_load_object_reset('fluff_puffs');
+  }
+  $puffs = ctools_export_load_object('fluff_puffs', 'all', array());
+  return $puffs;
 }
 
 /**
