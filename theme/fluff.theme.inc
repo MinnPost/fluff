@@ -18,7 +18,7 @@ function theme_fluff_puffs_table_form($form) {
   unset($form['puffs_select']['#description']);
   
   // Create table
-  $header = array(t('Select'), t('Puff'), t('Branch'), t('Puffs'), t('Actions'));
+  $header = array(t('Select'), t('Puff'), t('Branch'), t('Embeddables'), t('Actions'));
   $rows = array();
   foreach (element_children($form['puffs_select']) as $element) {
 
