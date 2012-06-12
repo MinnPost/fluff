@@ -95,5 +95,26 @@ function fluff_schema() {
     'primary key' => array('machine_name'),
   );
 
+  // Puffs in nodes
+  $schema['fluff_node_puffs'] = array(
+    'description' => 'Tracking puffs in nodes',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The node ID.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'puff_machine_name' => array(
+        'description' => 'The primary identifier for the puff.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('nid', 'puff_machine_name'),
+  );
+
   return $schema;
 }

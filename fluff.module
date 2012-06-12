@@ -292,6 +292,61 @@ function fluff_update_puff($puff) {
 }
 
 /**
+ * Implements hook_form_alter().
+ */
+function fluff_form_alter(&$form, $form_state, $form_id) {
+  if (isset($form['type']) && isset($form['#node'])) {
+    $node = $form['#node'];
+    $puffs = fluff_get_puffs();
+  
+    // Build options list
+    $puffs_options = array();
+    foreach ($puffs as $p) {
+      $puffs_options[$p->machine_name] = check_plain($p->title);
+    }
+  
+    $form['fluff_node_settings'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Fluff embeds'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['fluff_node_settings']['puffs'] = array(
+      '#type' => 'checkboxes',
+      '#title' => t('Puffs'),
+      '#description' => t('Choose which Puffs to enable for this node.'),
+      '#options' => $puffs_options,
+      '#default_value' => $node->puffs,
+    );
+  }
+}
+
+/**
+ * Implements hook_nodeapi().
+ */
+function fluff_nodeapi(&$node, $op, $arg = 0) {
+  switch ($op) {
+    case 'load':
+      //return db_fetch_array(db_query("SELECT last_comment_timestamp, last_comment_name, comment_count FROM {node_comment_statistics} WHERE nid = %d", $node->nid));
+      break;
+
+    case 'prepare':
+      if (isset($node->puffs)) {
+        //$node->comment = variable_get("comment_$node->type", COMMENT_NODE_READ_WRITE);
+      }
+      break;
+
+    case 'insert':
+      //db_query('INSERT INTO {node_comment_statistics} (nid, last_comment_timestamp, last_comment_name, last_comment_uid, comment_count) VALUES (%d, %d, NULL, %d, 0)', $node->nid, $node->changed, $node->uid);
+      break;
+
+    case 'delete':
+      db_query('DELETE FROM {fluff_node_puffs} WHERE nid = %d', $node->nid);
+      break;
+  }
+}
+
+/**
  * A wrapper around the exec() command.
  *
  * @param $cmd
