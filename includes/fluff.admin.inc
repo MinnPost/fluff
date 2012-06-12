@@ -53,8 +53,57 @@ function fluff_admin_puffs(&$form_state) {
  * View puff.
  */
 function fluff_admin_view_puff(&$form_state, $puff = array()) {
+  $form = array();
   
-  return '';
+  $form['title'] = array(
+    '#type' => 'item',
+    '#title' => t('Title'),
+    '#value' => check_plain($puff->title),
+  );
+  
+  $form['debug'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Debug'),
+    '#collapsed' => TRUE,
+    '#collapsible' => TRUE,
+  );
+  $form['debug']['debug_output'] = array(
+    '#type' => 'item',
+    '#value' => '<code><pre>' . var_export($puff, TRUE) . '</pre></code>',
+  );
+  
+  $form['update'] = array(
+    '#type' => 'submit',
+    '#value' => t('Update'),
+  );
+  
+  $form['puff'] = array(
+    '#type' => 'value',
+    '#value' => $puff,
+  );
+  
+  return $form;
+}
+
+/**
+ * Submit view puff
+ */
+function fluff_admin_view_puff_submit($form, &$form_state) {
+  if ($form_state['clicked_button']['#value'] == t('Update')) {
+    $updated = fluff_update_puff($form_state['values']['puff']);
+    
+    if ($updated === TRUE) {
+      drupal_set_message(t('Puff, %puff_name, updated successfully.', array(
+        '%puff_name' => $form_state['values']['puff']->title,
+      )));
+    }
+    else {
+      drupal_set_message(t('Error updating puff, %puff_name.  %error', array(
+        '%puff_name' => $form_state['values']['puff']->title,
+        '%error' => ($updated === FALSE) ? t('Unknown error') : $updated,
+      )));
+    }
+  }
 }
 
 /**

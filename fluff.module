@@ -58,7 +58,7 @@ function fluff_menu() {
     'title' => 'View',
     'description' => 'View puff.',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('fluff_admin_view_puff'),
+    'page arguments' => array('fluff_admin_view_puff', 4),
     'access arguments' => array('administer fluff'),
     'file' => 'includes/fluff.admin.inc',
     'type' => MENU_LOCAL_TASK,
@@ -234,6 +234,61 @@ function fluff_get_puffs($reset = TRUE) {
   }
   $puffs = ctools_export_load_object('fluff_puffs', 'all', array());
   return $puffs;
+}
+
+/**
+ * Update puffs (ie do a git pull)
+ *
+ * @param $puff
+ *   Either string or object.
+ */
+function fluff_update_puff($puff) {
+  if (is_string($puff)) {
+    $puff = fluff_get_puff($puff);
+  }
+  
+  if (!isset($puff) || empty($puff) || $puff === FALSE) {
+    return FALSE;
+  }
+  
+  // Go to directory and do a git pull on the branch 
+  $branch = (empty($puff->branch)) ? 'master' : $puff->branch;
+  $path = fluff_document_root() . '/' . $puff->local_repo;
+  $cmd = 'cd ' . $path . ' && git pull origin ' . $branch;
+  $success = fluff_exec($cmd, '', $output, $returned);
+  
+  // Check for new info data// Handle any submodules
+  if ($success === TRUE) {
+    // Look for .info file
+    $infos = file_scan_directory($puff->local_repo, '\.puff$', array('.', '..', 'CVS', '.git'));
+    if (is_array($infos) && count($infos) > 0) {
+      // We really only want the first info file we find.
+      $info = array_shift($infos);
+      
+      // Git puff info
+      $puff_info = drupal_parse_info_file($info->filename);
+      
+      // Build object.
+      $puff->info_location = $info->filename;
+      $puff->title = (isset($puff_info['title'])) ? $puff_info['title'] : '';
+      $puff->config = $puff_info;
+      
+      // Save to DB
+      $save = drupal_write_record('fluff_puffs', $puff, array('machine_name'));
+      if ($save == SAVED_NEW || $save == SAVED_UPDATED) {
+        return TRUE;
+      }
+      else {
+        return t('Error when saving to database.');
+      }
+    }
+    else {
+      return t('Could not find a valid .puff file');
+    }
+  }
+  else {
+    return $success;
+  }
 }
 
 /**
