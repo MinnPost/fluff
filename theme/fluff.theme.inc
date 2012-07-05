@@ -4,7 +4,7 @@
  * Main theme file for the Fluff moduel.
  */
 
-function theme_fluff_puffs_table_form($form) {
+function theme_fluff_puffs_table_form($form = array()) {
   $output = '';
   $puffs = array();
 
@@ -48,5 +48,34 @@ function theme_fluff_puffs_table_form($form) {
   $output .= drupal_render($form['buttons']);
   $output .= drupal_render($form);
 
+  return $output;
+}
+
+/**
+ * Theme function for puff info in forms.
+ */
+function theme_fluff_form_puff_info($puffs = array()) {
+  $output = '';
+  
+  dpm($puffs);
+  
+  $output .= '<div class="fluff-form-puff-info">';
+  foreach ($puffs as $k => $p) {
+    $output .= '<div class="' . $k . ' fluff-form-info-item">';
+    $output .= '<h3>' . check_plain($p->config['title']) . ' ' . t('(enabled)') . '</h3>';
+    $output .= '<p>' . check_plain($p->config['description']) . '</p>';
+    $output .= '<ul>';
+    foreach ($p->config['puffs'] as $t => $g) {
+      $output .= '<li>';
+      $output .= '<strong>' . check_plain($g['title']) . '</strong><br />';
+      $output .= check_plain($g['description']) . '<br />';
+      $output .= t('Embed') . ': <code>[' . $k . ' ' . $t . ']</code>';
+      $output .= '</li>';
+    }
+    $output .= '</ul>';
+    $output .= '</div>';
+  }
+  $output .= '</div>';
+  
   return $output;
 }

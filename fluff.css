@@ -1,0 +1,12 @@
+/**
+ * @file
+ * Main CSS for Fluff module.
+ */
+.fluff-form-puff-info {
+  width: 40%;
+  float: right;
+}
+
+.fluff-form-puff-info .fluff-form-info-item {
+  display: none;
+}
