@@ -57,8 +57,6 @@ function theme_fluff_puffs_table_form($form = array()) {
 function theme_fluff_form_puff_info($puffs = array()) {
   $output = '';
   
-  dpm($puffs);
-  
   $output .= '<div class="fluff-form-puff-info">';
   foreach ($puffs as $k => $p) {
     $output .= '<div class="' . $k . ' fluff-form-info-item">';
